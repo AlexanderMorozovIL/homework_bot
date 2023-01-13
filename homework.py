@@ -78,7 +78,9 @@ def get_api_answer(timestamp):
     if response.status_code != HTTPStatus.OK:
         status_code = response.status_code
         logger.error(f'Ошибка {status_code}')
-        raise exceptions.APIResponseStatusCodeException(f'Ошибка {status_code}')
+        raise exceptions.APIResponseStatusCodeException(
+            f'Ошибка {status_code}'
+        )
     try:
         return response.json()
     except ValueError:
