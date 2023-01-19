@@ -72,11 +72,10 @@ def get_api_answer(timestamp):
     """Запрос к эндпоинту API-сервиса."""
     timestamp = timestamp or int(time.time())
     payload = {'from_date': timestamp}
-    logger.info('Произведён запрос к API')
+    logger.info('Начинаем делать запрос к API')
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
     except requests.RequestException as error:
-        logger.error(f'Ошибка при запросе к основному API: {error}')
         raise exceptions.RequestAPIError(
             f'Ошибка при запросе к основному API: {error}'
         )
@@ -89,7 +88,6 @@ def get_api_answer(timestamp):
         response = response.json()
         return response
     except ValueError:
-        logger.error('Ошибка парсинга ответа из формата json')
         raise ValueError('Ошибка парсинга ответа из формата json')
 
 
@@ -116,18 +114,20 @@ def parse_status(homework):
     homework_status = homework.get('status')
     homework_name = homework.get('homework_name')
     if homework_status is None:
-        raise exceptions.HomeworkStatusError(
-            'Неизвестен статус домашней работы'
+        raise exceptions.HomeworkStatusNoneError(
+            'Статус домашней работы не обнаружен'
         )
     if homework_name is None:
         raise exceptions.HomeworkNameError(
             'Неизвестно имя домашней работы'
         )
     if homework_status not in HOMEWORK_VERDICTS:
-        raise KeyError('Hет нужных ключей в словаре')
+        raise exceptions.UnknownHomeworkStatusError(
+            'Неизвестный статус домашней работы'
+        )
     verdict = HOMEWORK_VERDICTS.get(homework_status)
     return ('Изменился статус проверки '
-            + f'работы "{homework_name}". {verdict}')
+            f'работы "{homework_name}". {verdict}')
 
 
 def main():
@@ -154,15 +154,11 @@ def main():
             else:
                 logger.info('Домашних работ не найдено!')
             current_timestamp = response.get('current_date')
-        except exceptions.APIResponseStatusCodeException as error:
-            logger.error(
-                f'Статус код ответа API не соответствует ожидвемому: {error}'
-            )
-        except KeyError as error:
-            logger.error(f'Отcутствие ключа в ответе API-сервиса: {error}')
+        except exceptions.SendMessageError as error:
+            logger.error(f'Ошибка при отправке сообщения: {error}')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-            logger.warning('Домашних работ не найдено!')
+            logger.error(message)
             if last_status != message:
                 send_message(bot, message)
                 last_status = message

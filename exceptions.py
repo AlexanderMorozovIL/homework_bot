@@ -16,7 +16,13 @@ class APIResponseStatusCodeException(Exception):
     pass
 
 
-class HomeworkStatusError(Exception):
+class HomeworkStatusNoneError(Exception):
+    """Статус домашней работы не обнаружен."""
+
+    pass
+
+
+class UnknownHomeworkStatusError(Exception):
     """Неизвестный статус домашней работы."""
 
     pass
